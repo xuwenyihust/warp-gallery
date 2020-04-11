@@ -21,10 +21,13 @@ class WordCloudGenerator(object):
         self.min_font_size = 5
 
     def get_barrages(self) -> List[str]:
+        # get xml
         html = requests.get(self.url).content
         html_data = str(html, 'utf-8')
+        # parse xml
         soup = BeautifulSoup(html_data, 'lxml')
         results = soup.find_all('d')
+        # extract barrages
         comments = [comment.text for comment in results]
         # save to csv
         df = pd.DataFrame(comments, columns=['comments'])
@@ -32,11 +35,13 @@ class WordCloudGenerator(object):
         df.to_csv(file_name, encoding='utf-8')
         return comments
 
-    def generate_graph(self, comments: List[str]):
+    def clean_data(self, comments: List[str]) -> str:
         dm_str = " ".join(comments)
-        words_list = jieba.lcut(dm_str)  # 切分的是字符串,返回的是列表
+        words_list = jieba.lcut(dm_str)
         words_str = " ".join(words_list)
+        return words_str
 
+    def generate_graph(self, words_str: str):
         background_image = plt.imread(self.mask_image)
 
         wc = WordCloud(
@@ -50,12 +55,13 @@ class WordCloudGenerator(object):
             random_state=50,
         )
 
-        word_cloud = wc.generate(words_str)  # 产生词云
-        word_cloud.to_file("outputs/word_cloud_{}.jpg".format(self.cid))  # 保存图片
+        word_cloud = wc.generate(words_str)
+        word_cloud.to_file("outputs/word_cloud_{}.jpg".format(self.cid))
 
     def main(self):
         comments = self.get_barrages()
-        self.generate_graph(comments)
+        words_str = self.clean_data(comments)
+        self.generate_graph(words_str)
 
 
 if __name__ == '__main__':
