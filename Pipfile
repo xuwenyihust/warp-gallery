@@ -6,6 +6,13 @@ verify_ssl = true
 [dev-packages]
 
 [packages]
+requests = "*"
+beautifulsoup4 = "==4.9.0"
+lxml = "*"
+pandas = "*"
+jieba = "*"
+matplotlib = "*"
+wordcloud = "*"
 
 [requires]
 python_version = "3.7"
