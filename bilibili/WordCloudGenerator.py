@@ -51,7 +51,7 @@ class WordCloudGenerator(object):
         )
 
         word_cloud = wc.generate(words_str)  # 产生词云
-        word_cloud.to_file("images/word_cloud_{}.jpg".format(self.cid))  # 保存图片
+        word_cloud.to_file("outputs/word_cloud_{}.jpg".format(self.cid))  # 保存图片
 
     def main(self):
         comments = self.get_barrages()
