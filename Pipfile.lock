@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "c2a88ea9f3507b27017945e02dae1d26221db1331f68f77f1f9af16519d850a8"
+            "sha256": "9668a98b809a30dabc5036b328ce04d09149ee49e7c2747db1b98dff48d9cdfb"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -24,6 +24,13 @@
             ],
             "index": "pypi",
             "version": "==4.9.0"
+        },
+        "bilibili-api": {
+            "hashes": [
+                "sha256:fd7a6e38ea390cc1d0b5dc685e67d0a1b9d886cbdd1029436a0c17d988377ce4"
+            ],
+            "index": "pypi",
+            "version": "==1.3.3"
         },
         "certifi": {
             "hashes": [
