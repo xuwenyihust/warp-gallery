@@ -11,6 +11,13 @@ class WordCloudGenerator(object):
     def __init__(self):
         self.cid: str = '73417156'
         self.url = 'http://comment.bilibili.com/{}.xml'.format(self.cid)
+        # image related
+        self.mask_image = 'resources/masks/film.jpg'
+        self.font_path = '/System/Library/Fonts/STHeiti Light.ttc'
+        self.background_color = 'white'
+        self.max_words = 2000
+        self.max_font_size = 40
+        self.min_font_size = 5
 
     def main(self):
         html = requests.get(self.url).content
@@ -27,15 +34,15 @@ class WordCloudGenerator(object):
         words_list = jieba.lcut(dm_str)  # 切分的是字符串,返回的是列表
         words_str = " ".join(words_list)
 
-        backgroud_Image = plt.imread('resources/masks/film.jpg')
+        background_image = plt.imread(self.mask_image)
 
         wc = WordCloud(
-            background_color='white',
-            mask=backgroud_Image,
-            font_path='/System/Library/Fonts/STHeiti Light.ttc',  # 设置本地字体
-            max_words=20000,
-            max_font_size=50,
-            min_font_size=5,
+            background_color=self.background_color,
+            mask=background_image,
+            font_path=self.font_path,
+            max_words=self.max_words,
+            max_font_size=self.max_font_size,
+            min_font_size=self.min_font_size,
             # random_state=50,
         )
 
