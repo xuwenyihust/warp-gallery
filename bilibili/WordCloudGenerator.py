@@ -10,7 +10,6 @@ from pyhocon import ConfigFactory
 from wordcloud import WordCloud, ImageColorGenerator, random_color_func
 from bilibili_api import video
 from bilibili_api.user import UserInfo
-from bilibili.UserInfo import user_info_map
 
 
 class WordCloudGenerator(object):
@@ -18,17 +17,17 @@ class WordCloudGenerator(object):
     logging.basicConfig(level="INFO")
 
     def __init__(self):
+        logging.info("Initializing WordCloudGenerator.")
         # load config
         auth = ConfigFactory.parse_file('auth.conf')
         self.sess_data = auth.get_string("sess_data")
 
         self.cid: str = '73417156'
         # image related
-        self.mask_image = 'resources/masks/bilibili_tv.jpg'
         self.font_path = '/System/Library/Fonts/STHeiti Light.ttc'
         self.background_color = 'white'
         self.max_words = 100000
-        self.max_font_size = 200
+        self.max_font_size = 400
         self.min_font_size = 10
 
     @staticmethod
@@ -113,19 +112,20 @@ class WordCloudGenerator(object):
         for word in stopwords + bilibili_meaninglesswords:
             if word in words_map:
                 del words_map[word]
+        logging.info("Data cleaned.")
         return words_map
 
-    def generate_graph_from_file(self, file_path: str, uid: str) -> None:
+    def generate_graph_from_file(self, file_path: str, uid: str, mask_file_path: str) -> None:
         try:
             df = pd.read_csv(file_path, sep=",", usecols=["text"])
             barrages = df["text"].values.tolist()
             barrages_map = self.clean_data(barrages)
-            self.generate_graph_from_map(barrages_map, uid)
+            self.generate_graph_from_map(barrages_map, uid, mask_file_path)
         except Exception as e:
             logging.error("Failed to open {}: ".format(file_path) + str(e))
 
-    def generate_graph_from_map(self, words_map: dict, uid: str) -> None:
-        background_image = plt.imread(self.mask_image)
+    def generate_graph_from_map(self, words_map: dict, uid: str, mask_file_path: str) -> None:
+        background_image = plt.imread(mask_file_path)
         image_colors = ImageColorGenerator(background_image)
 
         wc = WordCloud(
@@ -142,23 +142,11 @@ class WordCloudGenerator(object):
 
         word_cloud = wc.generate_from_frequencies(words_map)
         word_cloud.to_file("outputs/word_cloud_{}.jpg".format(uid))
+        logging.info("Graph generated.")
 
-    def main(self):
-        # comments = self.get_history_barrages(self.cid, '2020-04-03')
-        # comments = self.get_realtime_barrages(self.cid)
-        # words_str = self.clean_data(comments)
-        # self.generate_graph(words_str)
-
-        uid = user_info_map["media_storm"]["mid"]
-
-        # videos = self.get_videos_by_user(uid)
+    def run(self, uid: int, mask_file_path: str) -> None:
+        videos = self.get_videos_by_user(uid)
         # self.get_realtime_barrages_by_uid(uid, videos)
 
         barrages_file_path = 'resources/barrages/realtime_barrage_by_user_{}.csv'.format(uid)
-        self.generate_graph_from_file(barrages_file_path, uid)
-
-
-if __name__ == '__main__':
-    word_cloud_generator = WordCloudGenerator()
-    word_cloud_generator.main()
-
+        self.generate_graph_from_file(barrages_file_path, str(uid), mask_file_path)
