@@ -9,11 +9,15 @@
 ## Projects
 ### Bilibili
 
+#### WordCloud
+![xiaomi](bilibili/outputs/word_cloud_23920239.jpg)
+
 ## Dependencies
+Please check [Pipfile](https://github.com/xuwenyihust/warp-gallery/blob/master/Pipfile).
 
 ## Links
-
-
+* [bilibili_api](https://github.com/Passkou/bilibili_api)
+* [对B站弹幕数据分析及可视化的小例子](https://zhuanlan.zhihu.com/p/26282101)
 
 
 
