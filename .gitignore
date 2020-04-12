@@ -131,3 +131,4 @@ dmypy.json
 .idea/
 /bilibili/auth.conf
 /bilibili/resources/masks/tim.jpg
+/bilibili/resources/barrages/

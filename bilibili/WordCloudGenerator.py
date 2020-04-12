@@ -146,7 +146,7 @@ class WordCloudGenerator(object):
 
     def run(self, uid: int, mask_file_path: str) -> None:
         videos = self.get_videos_by_user(uid)
-        # self.get_realtime_barrages_by_uid(uid, videos)
+        self.get_realtime_barrages_by_uid(uid, videos)
 
         barrages_file_path = 'resources/barrages/realtime_barrage_by_user_{}.csv'.format(uid)
         self.generate_graph_from_file(barrages_file_path, str(uid), mask_file_path)
