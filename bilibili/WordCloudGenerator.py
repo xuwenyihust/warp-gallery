@@ -58,7 +58,7 @@ class WordCloudGenerator(object):
                 video["play"] = 0
         return video["play"]
 
-    def clean_data(self, comments: List[str]) -> dict:
+    def __clean_data(self, comments: List[str]) -> dict:
         stopwords = [line.strip() for line in open(self.stopwords, 'r', encoding='utf-8').readlines()]
         bilibili_meaninglesswords = [line.strip() for line in
                                      open(self.bilibili_meaninglesswords, 'r', encoding='utf-8').readlines()]
@@ -115,7 +115,7 @@ class WordCloudGenerator(object):
         try:
             df = pd.read_csv(file_path, sep=",", usecols=["text"])
             barrages = df["text"].values.tolist()
-            barrages_map = self.clean_data(barrages)
+            barrages_map = self.__clean_data(barrages)
             self.generate_graph_from_map(barrages_map, uid, mask_file_path)
         except Exception as e:
             raise e
