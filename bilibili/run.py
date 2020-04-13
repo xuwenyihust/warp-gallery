@@ -4,10 +4,10 @@ from bilibili.UserInfo import user_info_map
 
 def run(uid, mask_file_path):
     word_cloud_generator = WordCloudGenerator()
-    #
-    # videos = word_cloud_generator.get_videos_by_user(uid, 100)
-    # barrages_file_path = word_cloud_generator.get_barrages_by_uid(uid, videos)
-    barrages_file_path = "resources/barrages/barrage_by_uid_777536.csv"
+
+    videos = word_cloud_generator.get_videos_by_user(uid, 100)
+    barrages_file_path = word_cloud_generator.get_barrages_by_uid(uid, videos)
+    # barrages_file_path = "resources/barrages/barrage_by_uid_777536.csv"
     word_cloud_generator.generate_graph_from_file(barrages_file_path, str(uid), mask_file_path)
 
 
