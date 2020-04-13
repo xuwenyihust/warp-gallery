@@ -6,10 +6,12 @@
 
 数据分析与可视化项目合集。
 
-## Projects
-### Bilibili
+## 项目
+### Bilibili弹幕文字云
+数据囊括UP主所有上传视频（上限100，按播放量排序）的弹幕。
 
-#### WordCloud Examples
+#### 示例
+
 <details>
 <summary>雷总</summary>
 <br>
@@ -34,10 +36,10 @@
 
 </details>
 
-## Dependencies
+## 依赖
 Please check [Pipfile](https://github.com/xuwenyihust/warp-gallery/blob/master/Pipfile).
 
-## Links
+## 链接
 * [bilibili_api](https://github.com/Passkou/bilibili_api)
 * [对B站弹幕数据分析及可视化的小例子](https://zhuanlan.zhihu.com/p/26282101)
 
