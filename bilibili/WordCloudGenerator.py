@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import logging
 from pyhocon import ConfigFactory
 from wordcloud import WordCloud, ImageColorGenerator, random_color_func
+from bilibili_api.src import exception
 from bilibili_api import video
 from bilibili_api.user import UserInfo
 
@@ -39,21 +40,29 @@ class WordCloudGenerator(object):
         self.max_font_size = 400
         self.min_font_size = 10
 
-    @staticmethod
-    def get_videos_by_user(uid: int) -> List[dict]:
+    def get_videos_by_user(self, uid: int, limit: int = 114514) -> List[dict]:
         user = UserInfo(uid=uid)
         info = user.get_info()
-        logging.info("Got information of user: {}".format(info['name']))
-        videos = user.get_video()
+        logging.info("Got information of user {}: {}".format(info['name'], info))
+        videos = user.get_video(limit=limit)
         logging.info("Got {} videos of user {}".format(len(videos), info['name']))
-        videos = sorted(videos, key=lambda x: x["play"], reverse=True)
+        videos = sorted(videos, key=self.__video_comparator, reverse=True)
         return videos
+
+    @staticmethod
+    def __video_comparator(video: dict):
+        if type(video["play"]) != int:
+            try:
+                video["play"] = int(video["play"])
+            except ValueError:
+                video["play"] = 0
+        return video["play"]
 
     def clean_data(self, comments: List[str]) -> dict:
         stopwords = [line.strip() for line in open(self.stopwords, 'r', encoding='utf-8').readlines()]
         bilibili_meaninglesswords = [line.strip() for line in
                                      open(self.bilibili_meaninglesswords, 'r', encoding='utf-8').readlines()]
-        dm_str = " ".join(comments)
+        dm_str = " ".join(str(comment) for comment in comments)
         words_list = jieba.lcut(dm_str)
         words_map = Counter(words_list)
         for word in stopwords + bilibili_meaninglesswords:
@@ -62,20 +71,24 @@ class WordCloudGenerator(object):
         logging.info("Data cleaned.")
         return words_map
 
-    def get_barrages_by_uid(self, uid: int, videos: List[dict]) -> None:
+    def get_barrages_by_uid(self, uid: int, videos: List[dict]) -> str:
         aids = [x["aid"] for x in videos]
         barrages = []
 
         for aid in aids:
-            video_info = video.VideoInfo(aid=aid)
-            danmuku = video_info.get_danmaku(page=0)
-            danmuku_text = [x.text for x in danmuku]
-            barrages.extend(danmuku_text)
-            logging.info("Got {} barrages from {}".format(len(danmuku), video_info.get_video_info()))
+            try:
+                video_info = video.VideoInfo(aid=aid)
+                danmuku = video_info.get_danmaku(page=0)
+                danmuku_text = [x.text for x in danmuku]
+                barrages.extend(danmuku_text)
+                logging.info("Got {} barrages from {}".format(len(danmuku), video_info.get_video_info()))
+            except exception.BiliException as e:
+                logging.error("Failed to get barrages." + e.msg)
         # save to file
         df = pd.DataFrame(barrages, columns=['text'])
-        file_name = (self.barrages_dir + self.barrages_by_uid_file).format(uid)
-        df.to_csv(file_name, encoding='utf-8')
+        file_path = (self.barrages_dir + '/' + self.barrages_by_uid_file + '.csv').format(uid)
+        df.to_csv(file_path, encoding='utf-8')
+        return file_path
 
     def get_barrages_by_cid(self, cid: str, save_to_file: bool = False) -> List[str]:
         realtime_barrage_url = self.barrage_url_base.format(cid)
@@ -91,7 +104,7 @@ class WordCloudGenerator(object):
         # save to csv
         if save_to_file:
             df = pd.DataFrame(comments, columns=['comments'])
-            file_name = (self.barrages_dir + self.barrages_by_cid_file).format(cid)
+            file_name = (self.barrages_dir + '/' + self.barrages_by_cid_file + '.csv').format(cid)
             df.to_csv(file_name, encoding='utf-8')
             logging.info("Barrages saved to file: {}".format(file_name))
         else:
@@ -105,7 +118,7 @@ class WordCloudGenerator(object):
             barrages_map = self.clean_data(barrages)
             self.generate_graph_from_map(barrages_map, uid, mask_file_path)
         except Exception as e:
-            logging.error("Failed to open {}: ".format(file_path) + str(e))
+            raise e
 
     def generate_graph_from_map(self, words_map: dict, uid: str, mask_file_path: str) -> None:
         background_image = plt.imread(mask_file_path)
