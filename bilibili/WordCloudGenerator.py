@@ -22,8 +22,17 @@ class WordCloudGenerator(object):
         auth = ConfigFactory.parse_file('auth.conf')
         self.sess_data = auth.get_string("sess_data")
 
-        self.cid: str = '73417156'
-        # image related
+        # url
+        self.barrage_url_base = 'http://comment.bilibili.com/{}.xml'
+
+        # file path
+        self.stopwords = "stopwords.txt"
+        self.bilibili_meaninglesswords = "bilibili_meaninglesswords.txt"
+        self.barrages_dir = "resources/barrages"
+        self.barrages_by_uid_file = "barrage_by_uid_{}"
+        self.barrages_by_cid_file = "barrage_by_cid_{}"
+
+        # image
         self.font_path = '/System/Library/Fonts/STHeiti Light.ttc'
         self.background_color = 'white'
         self.max_words = 100000
@@ -40,32 +49,20 @@ class WordCloudGenerator(object):
         videos = sorted(videos, key=lambda x: x["play"], reverse=True)
         return videos
 
-    def get_history_barrages_by_cid(self, cid: str, date: str, save_to_file: bool = False):
-        history_barrage_url = 'https://api.bilibili.com/x/v2/dm/history?type=1&oid={}&date={}'.format(cid, date)
-        cookies = {
-            "SESSDATA": self.sess_data
-        }
-        # get xml
-        html = requests.get(url=history_barrage_url, cookies=cookies).content
-        html_data = str(html, 'utf-8')
-        # parse xml
-        soup = BeautifulSoup(html_data, 'lxml')
-        results = soup.find_all('d')
-        logging.info("Got totally {} barrages".format(len(results)))
-        # extract barrages
-        comments = [comment.text for comment in results]
-        # save to csv
-        if save_to_file:
-            df = pd.DataFrame(comments, columns=['comments'])
-            file_name = 'resources/barrages/history_barrage_{}_{}.csv'.format(date, cid)
-            df.to_csv(file_name, encoding='utf-8')
-            logging.info("Barrages saved to file: {}".format(file_name))
-        else:
-            logging.info("Skipped save to file.")
-        return comments
+    def clean_data(self, comments: List[str]) -> dict:
+        stopwords = [line.strip() for line in open(self.stopwords, 'r', encoding='utf-8').readlines()]
+        bilibili_meaninglesswords = [line.strip() for line in
+                                     open(self.bilibili_meaninglesswords, 'r', encoding='utf-8').readlines()]
+        dm_str = " ".join(comments)
+        words_list = jieba.lcut(dm_str)
+        words_map = Counter(words_list)
+        for word in stopwords + bilibili_meaninglesswords:
+            if word in words_map:
+                del words_map[word]
+        logging.info("Data cleaned.")
+        return words_map
 
-    @staticmethod
-    def get_realtime_barrages_by_uid(uid: int, videos: List[dict]) -> None:
+    def get_barrages_by_uid(self, uid: int, videos: List[dict]) -> None:
         aids = [x["aid"] for x in videos]
         barrages = []
 
@@ -77,12 +74,11 @@ class WordCloudGenerator(object):
             logging.info("Got {} barrages from {}".format(len(danmuku), video_info.get_video_info()))
         # save to file
         df = pd.DataFrame(barrages, columns=['text'])
-        file_name = 'resources/barrages/realtime_barrage_by_user_{}.csv'.format(uid)
+        file_name = (self.barrages_dir + self.barrages_by_uid_file).format(uid)
         df.to_csv(file_name, encoding='utf-8')
 
-    @staticmethod
-    def get_realtime_barrages_by_cid(cid: str, save_to_file: bool = False) -> List[str]:
-        realtime_barrage_url = 'http://comment.bilibili.com/{}.xml'.format(cid)
+    def get_barrages_by_cid(self, cid: str, save_to_file: bool = False) -> List[str]:
+        realtime_barrage_url = self.barrage_url_base.format(cid)
         # get xml
         html = requests.get(realtime_barrage_url).content
         html_data = str(html, 'utf-8')
@@ -95,25 +91,12 @@ class WordCloudGenerator(object):
         # save to csv
         if save_to_file:
             df = pd.DataFrame(comments, columns=['comments'])
-            file_name = 'resources/barrages/realtime_barrage_{}.csv'.format(cid)
+            file_name = (self.barrages_dir + self.barrages_by_cid_file).format(cid)
             df.to_csv(file_name, encoding='utf-8')
             logging.info("Barrages saved to file: {}".format(file_name))
         else:
             logging.info("Skipped save to file.")
         return comments
-
-    @staticmethod
-    def clean_data(comments: List[str]) -> dict:
-        stopwords = [line.strip() for line in open("stopwords.txt", 'r', encoding='utf-8').readlines()]
-        bilibili_meaninglesswords = [line.strip() for line in open("bilibili_meaninglesswords.txt", 'r', encoding='utf-8').readlines()]
-        dm_str = " ".join(comments)
-        words_list = jieba.lcut(dm_str)
-        words_map = Counter(words_list)
-        for word in stopwords + bilibili_meaninglesswords:
-            if word in words_map:
-                del words_map[word]
-        logging.info("Data cleaned.")
-        return words_map
 
     def generate_graph_from_file(self, file_path: str, uid: str, mask_file_path: str) -> None:
         try:
@@ -143,10 +126,3 @@ class WordCloudGenerator(object):
         word_cloud = wc.generate_from_frequencies(words_map)
         word_cloud.to_file("outputs/word_cloud_{}.jpg".format(uid))
         logging.info("Graph generated.")
-
-    def run(self, uid: int, mask_file_path: str) -> None:
-        videos = self.get_videos_by_user(uid)
-        self.get_realtime_barrages_by_uid(uid, videos)
-
-        barrages_file_path = 'resources/barrages/realtime_barrage_by_user_{}.csv'.format(uid)
-        self.generate_graph_from_file(barrages_file_path, str(uid), mask_file_path)
