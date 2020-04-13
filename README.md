@@ -9,8 +9,22 @@
 ## Projects
 ### Bilibili
 
-#### WordCloud
+#### WordCloud Examples
+<details>
+<summary>雷总</summary>
+<br>
+
 ![xiaomi](bilibili/outputs/word_cloud_23920239.jpg)
+
+</details>
+
+<details>
+<summary>LexBurner</summary>
+<br>
+
+![lexburner](bilibili/outputs/word_cloud_777536.jpg)
+
+</details>
 
 ## Dependencies
 Please check [Pipfile](https://github.com/xuwenyihust/warp-gallery/blob/master/Pipfile).
